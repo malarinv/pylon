@@ -38,4 +38,12 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: false
-          # No need for tags or labels in PR builds for now
+          load: true # Ensure image is loaded into local Docker daemon
+          tags: pylon-test-image:latest # Tag for local testing
+
+      - name: Test ARM64 Docker Image
+        run: |
+          echo "Attempting to run the ARM64 image..."
+          # This command will fail if pylon binary has issues like the syntax error
+          docker run --rm --platform linux/arm64 pylon-test-image:latest /usr/local/bin/pylon
+          echo "ARM64 image run attempt finished."
