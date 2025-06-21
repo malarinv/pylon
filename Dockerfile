@@ -1,4 +1,6 @@
-FROM debian:bookworm-slim as build
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+FROM --platform=$BUILDPLATFORM debian:bookworm-slim as build
 
 RUN apt-get update -qq && apt-get install -y \
   build-essential git make pkg-config cmake libssl-dev

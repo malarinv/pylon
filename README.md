@@ -2,7 +2,7 @@
 
 Easily tunnel traffic to and from your LAN and ZeroTier Virtual Network using an SOCKS5 proxy (includes an optional TCP relay for use behind difficult NATs)
 
-![Build](https://github.com/zerotier/pylon/actions/workflows/build.yml/badge.svg?branch=main)
+[![Build](https://github.com/zerotier/pylon/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/zerotier/pylon/actions/workflows/build.yml) [![Release Docker Image](https://github.com/zerotier/pylon/actions/workflows/release.yml/badge.svg)](https://github.com/zerotier/pylon/actions/workflows/release.yml)
 
 ## Build
 
@@ -13,12 +13,12 @@ make
 ```
 
 ## Docker
-We have docker images available if you prefer. 
+We have multi-arch (AMD64 and ARM64) Docker images available on GitHub Container Registry (GHCR).
 
 
 ### reflect
 ``` sh
-docker run --init -p 9443:443 -p 19993:9993/udp zerotier/pylon:latest \
+docker run --init -p 9443:443 -p 19993:9993/udp ghcr.io/zerotier/pylon:latest \
 reflect
 ```
 
@@ -29,7 +29,7 @@ See below for configuring zerotier-one to use your `reflect` as a tcp-relay.
 ``` sh
 docker run --init -e ZT_PYLON_SECRET_KEY=$(cat identity.secret) -e ZT_PYLON_WHITELISTED_PORT=4545 \
 --net=host --cap-add NET_ADMIN \
-zerotier/pylon refract 6ab565387a111111 --listen-addr 0.0.0.0 --listen-port 1080
+ghcr.io/zerotier/pylon:latest refract 6ab565387a111111 --listen-addr 0.0.0.0 --listen-port 1080
 ```
 
 See [Usage] for more info on the commands.
@@ -147,7 +147,11 @@ While a single Pylon instance will work for multiple networks and multiple appli
 
 ## Releasing
 
-Releasing to Docker Hub is done from our internal CI. 
-- create a tag on `main`: `git tag v0.1.7`
-- push the tag: `git push --tags` This triggers the build and push to dockerhub. 
-- create a Github Release through the Github ui. Select the tag you just pushed. 
+The project uses GitHub Actions to automate the release process. When a new tag in the format `v*.*.*` (e.g., `v0.1.7`) is pushed to the repository, a GitHub Actions workflow automatically builds and publishes a multi-arch (AMD64 and ARM64) Docker image to GitHub Container Registry (GHCR).
+
+Steps to release:
+1. Ensure your `main` branch is up-to-date and all changes are committed.
+2. Create a new tag: `git tag vX.Y.Z` (replace X.Y.Z with the version number).
+3. Push the tag: `git push origin vX.Y.Z` (or `git push --tags`).
+4. This will trigger the `release.yml` workflow, which builds and publishes the image to `ghcr.io/zerotier/pylon`.
+5. Optionally, create a GitHub Release through the UI, selecting the tag you just pushed and detailing the changes.
