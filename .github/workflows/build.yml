@@ -36,7 +36,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/arm64 # Changed from linux/amd64,linux/arm64
           push: false
           load: true # Ensure image is loaded into local Docker daemon
           tags: pylon-test-image:latest # Tag for local testing
