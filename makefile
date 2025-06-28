@@ -1,23 +1,26 @@
 # Default CXX, can be overridden
 CXX_DEFAULT := $(shell which clang++ g++ c++ 2>/dev/null | head -n 1)
-TARGET_ARCH_SIMPLE := $(subst linux/,,$(TARGETPLATFORM)) # E.g., "arm64" or "amd64"
 
-# Determine lib name part based on TARGETPLATFORM
-# This is a guess; build.sh might use 'aarch64' or the full 'linux/arm64' or something else.
-# We'll try with TARGET_ARCH_SIMPLE for now, e.g. 'arm64' or 'amd64'.
-# If TARGETPLATFORM is not set, default to 'host'.
-LIBZT_ARCH_DIR_PART := $(if $(TARGETPLATFORM),$(TARGET_ARCH_SIMPLE),host)
+# Default to native build if TARGETPLATFORM is not set
+TARGETPLATFORM ?= native/$(shell uname -m)
 
 ifeq ($(TARGETPLATFORM),linux/arm64)
-  CXX := aarch64-linux-gnu-g++
-  # Adjust LIBZT_ARCH_DIR_PART specifically if needed, e.g. if build.sh uses 'aarch64' for 'linux/arm64'
-  # For now, relying on TARGET_ARCH_SIMPLE which would be 'arm64'
-  LIBZT_BUILD_PARAM := arm64 # Parameter for build.sh
-  LIBZT_DIST_DIR_ARCH_PART := arm64 # Part of the dist path, e.g., dist/arm64-release
-else
-  CXX := $(CXX_DEFAULT)
+  export CC := aarch64-linux-gnu-gcc
+  export CXX := aarch64-linux-gnu-g++
+  export LD := aarch64-linux-gnu-ld
+  export AR := aarch64-linux-gnu-ar
+  export RANLIB := aarch64-linux-gnu-ranlib
+  # We are hoping build.sh uses these env vars and still outputs to a 'host' suffixed dir,
+  # or that the wildcard below is sufficient.
   LIBZT_BUILD_PARAM := host
-  LIBZT_DIST_DIR_ARCH_PART := host # Part of the dist path, e.g., dist/*-host-release
+  LIBZT_DIST_PATH_GLOB := *-host
+else
+  # For non-ARM64 or native builds, use default compilers and host params
+  export CC := $(shell which gcc cc 2>/dev/null | head -n 1)
+  export CXX := $(CXX_DEFAULT)
+  # No need to export LD, AR, RANLIB for native if they are not explicitly set.
+  LIBZT_BUILD_PARAM := host
+  LIBZT_DIST_PATH_GLOB := *-host
 endif
 
 INCLUDES?=-Iext/libzt/ext/ZeroTierOne/osdep -Iext/libzt/ext/ZeroTierOne/ext/prometheus-cpp-lite-1.0/core/include -Iext/libzt/ext/ZeroTierOne/ext-prometheus-cpp-lite-1.0/3rdparty/http-client-lite/include -Iext/libzt/ext/ZeroTierOne/ext/prometheus-cpp-lite-1.0/simpleapi/include
@@ -27,13 +30,13 @@ release:
 	git submodule update --init
 	git -C ext/libzt submodule update --init
 	cd ext/libzt && ./build.sh $(LIBZT_BUILD_PARAM) "release"
-	$(CXX) -O3 $(INCLUDES) -Wno-deprecated -std=c++11 pylon.cpp -o pylon ext/libzt/dist/$(LIBZT_DIST_DIR_ARCH_PART)-release/lib/libzt.a -Iext/libzt/include
+	$(CXX) -O3 $(INCLUDES) -Wno-deprecated -std=c++11 pylon.cpp -o pylon ext/libzt/dist/$(LIBZT_DIST_PATH_GLOB)-release/lib/libzt.a -Iext/libzt/include
 
 debug:
 	git submodule update --init
 	git -C ext/libzt submodule update --init
 	cd ext/libzt && ./build.sh $(LIBZT_BUILD_PARAM) "debug"
-	$(CXX) -O3 $(INCLUDES) -DPYLON_DEBUG=1 -g -Wno-deprecated -std=c++11 pylon.cpp -o pylon-debug ext/libzt/dist/$(LIBZT_DIST_DIR_ARCH_PART)-debug/lib/libzt.a -Iext/libzt/include
+	$(CXX) -O3 $(INCLUDES) -DPYLON_DEBUG=1 -g -Wno-deprecated -std=c++11 pylon.cpp -o pylon-debug ext/libzt/dist/$(LIBZT_DIST_PATH_GLOB)-debug/lib/libzt.a -Iext/libzt/include
 	#-fsanitize=address -DASAN_OPTIONS=symbolize=1
 
 clean:
