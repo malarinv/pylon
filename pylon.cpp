@@ -88,7 +88,11 @@
 #define LOG_ERROR(fmt, args...) fprintf(stderr, ZT_RED "%17s:%06d:%25s: " fmt "\n" ZT_RESET, ZT_FILENAME, __LINE__, __FUNCTION__, ##args)
 
 bool g_debug_verbose = false;
-#define LOG_DEBUG(fmt, args...) do { if (g_debug_verbose) fprintf(stderr, ZT_WHT "%17s:%06d:%25s: " fmt "\n" ZT_RESET, ZT_FILENAME, __LINE__, __FUNCTION__, ##args); } while (0)
+#define LOG_DEBUG(fmt, args...)                                                                                                                                                                                                                \
+    do {                                                                                                                                                                                                                                       \
+        if (g_debug_verbose)                                                                                                                                                                                                                   \
+            fprintf(stderr, ZT_WHT "%17s:%06d:%25s: " fmt "\n" ZT_RESET, ZT_FILENAME, __LINE__, __FUNCTION__, ##args);                                                                                                                         \
+    } while (0)
 
 ZeroTier::Mutex conn_m;
 
