@@ -87,15 +87,12 @@
 #define LOG_WARN(fmt, args...)  fprintf(stderr, ZT_YEL "%17s:%06d:%25s: " fmt "\n" ZT_RESET, ZT_FILENAME, __LINE__, __FUNCTION__, ##args)
 #define LOG_ERROR(fmt, args...) fprintf(stderr, ZT_RED "%17s:%06d:%25s: " fmt "\n" ZT_RESET, ZT_FILENAME, __LINE__, __FUNCTION__, ##args)
 
-#ifdef PYLON_DEBUG
-#define LOG_DEBUG(fmt, args...) fprintf(stderr, ZT_WHT "%17s:%06d:%25s: " fmt "\n" ZT_RESET, ZT_FILENAME, __LINE__, __FUNCTION__, ##args)
-#else
-#if defined(_WIN32)
-#define LOG_DEBUG(...)
-#else
-#define LOG_DEBUG(fmt, args...)
-#endif
-#endif
+bool g_debug_verbose = false;
+#define LOG_DEBUG(fmt, args...)                                                                                                                                                                                                                \
+    do {                                                                                                                                                                                                                                       \
+        if (g_debug_verbose)                                                                                                                                                                                                                   \
+            fprintf(stderr, ZT_WHT "%17s:%06d:%25s: " fmt "\n" ZT_RESET, ZT_FILENAME, __LINE__, __FUNCTION__, ##args);                                                                                                                         \
+    } while (0)
 
 ZeroTier::Mutex conn_m;
 
@@ -1154,6 +1151,21 @@ int main(int argc, char** argv)
     }
 
     PylonMode mode = PylonMode::Invalid;
+    bool verbose_logging = false;
+
+    // Check for verbose flag
+    for (int i = 1; i < argc; ++i) {
+        if (strcmp(argv[i], "--verbose") == 0 || strcmp(argv[i], "-v") == 0) {
+            verbose_logging = true;
+            g_debug_verbose = true;
+            // Remove the verbose flag from argv so it doesn't interfere with other argument parsing
+            for (int j = i; j < argc - 1; ++j) {
+                argv[j] = argv[j + 1];
+            }
+            argc--;
+            break;
+        }
+    }
 
     if (argc == 7) {
         // In this mode, pylon will proxy connections between the physical LAN and the ZeroTier virtual network
@@ -1200,7 +1212,8 @@ int main(int argc, char** argv)
 
     if (mode == PylonMode::Invalid) {
         fprintf(stderr, "\nUsage:\n\n");
-        fprintf(stderr, "pylon refract <net_id> --listen-addr 0.0.0.0 --listen-port 1080 --relay-addr 1.2.3.4 --relay-port 443\n");
+        fprintf(stderr, "pylon refract <net_id> --listen-addr 0.0.0.0 --listen-port 1080 [--relay-addr <relay_ip> --relay-port <relay_port>] [-v|--verbose]\n");
+        fprintf(stderr, "pylon reflect [-v|--verbose]\n");
         exit(0);
     }
 
