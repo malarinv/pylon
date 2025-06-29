@@ -36,7 +36,7 @@ debug:
 	git submodule update --init
 	git -C ext/libzt submodule update --init
 	cd ext/libzt && ./build.sh $(LIBZT_BUILD_PARAM) "debug"
-	$(CXX) -O3 $(INCLUDES) -DPYLON_DEBUG=1 -g -Wno-deprecated -std=c++11 pylon.cpp -o pylon-debug ext/libzt/dist/$(LIBZT_DIST_PATH_GLOB)-debug/lib/libzt.a -Iext/libzt/include
+	$(CXX) -O3 $(INCLUDES) -g -Wno-deprecated -std=c++11 pylon.cpp -o pylon-debug ext/libzt/dist/$(LIBZT_DIST_PATH_GLOB)-debug/lib/libzt.a -Iext/libzt/include
 	#-fsanitize=address -DASAN_OPTIONS=symbolize=1
 
 clean:
@@ -48,3 +48,6 @@ lint:
 
 fmt:
 	clang-format -i pylon.cpp -style file
+
+docker-build:
+	docker build -t pylon:latest .
